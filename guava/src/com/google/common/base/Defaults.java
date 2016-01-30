@@ -18,11 +18,12 @@ package com.google.common.base;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.common.annotations.GwtIncompatible;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.annotation.CheckReturnValue;
 import javax.annotation.Nullable;
 
 /**
@@ -31,7 +32,7 @@ import javax.annotation.Nullable;
  * @author Ben Yu
  * @since 1.0
  */
-@CheckReturnValue
+@GwtIncompatible
 public final class Defaults {
   private Defaults() {}
 

@@ -343,7 +343,7 @@ public final class Iterators {
    * @return a newly-allocated array into which all the elements of the iterator
    *         have been copied
    */
-  @GwtIncompatible("Array.newInstance(Class, int)")
+  @GwtIncompatible // Array.newInstance(Class, int)
   public static <T> T[] toArray(Iterator<? extends T> iterator, Class<T> type) {
     List<T> list = Lists.newArrayList(iterator);
     return Iterables.toArray(list, type);
@@ -453,11 +453,6 @@ public final class Iterators {
    *
    * <p>The returned iterator supports {@code remove()} when the corresponding
    * input iterator supports it.
-   *
-   * <p><b>Note:</b> the current implementation is not suitable for nested
-   * concatenated iterators, i.e. the following should be avoided when in a loop:
-   * {@code iterator = Iterators.concat(iterator, suffix);}, since iteration over the
-   * resulting iterator has a cubic complexity to the depth of the nesting.
    */
   public static <T> Iterator<T> concat(Iterator<? extends T> a, Iterator<? extends T> b) {
     checkNotNull(a);
@@ -473,11 +468,6 @@ public final class Iterators {
    *
    * <p>The returned iterator supports {@code remove()} when the corresponding
    * input iterator supports it.
-   *
-   * <p><b>Note:</b> the current implementation is not suitable for nested
-   * concatenated iterators, i.e. the following should be avoided when in a loop:
-   * {@code iterator = Iterators.concat(iterator, suffix);}, since iteration over the
-   * resulting iterator has a cubic complexity to the depth of the nesting.
    */
   public static <T> Iterator<T> concat(
       Iterator<? extends T> a, Iterator<? extends T> b, Iterator<? extends T> c) {
@@ -495,11 +485,6 @@ public final class Iterators {
    *
    * <p>The returned iterator supports {@code remove()} when the corresponding
    * input iterator supports it.
-   *
-   * <p><b>Note:</b> the current implementation is not suitable for nested
-   * concatenated iterators, i.e. the following should be avoided when in a loop:
-   * {@code iterator = Iterators.concat(iterator, suffix);}, since iteration over the
-   * resulting iterator has a cubic complexity to the depth of the nesting.
    */
   public static <T> Iterator<T> concat(
       Iterator<? extends T> a,
@@ -521,11 +506,6 @@ public final class Iterators {
    * <p>The returned iterator supports {@code remove()} when the corresponding
    * input iterator supports it.
    *
-   * <p><b>Note:</b> the current implementation is not suitable for nested
-   * concatenated iterators, i.e. the following should be avoided when in a loop:
-   * {@code iterator = Iterators.concat(iterator, suffix);}, since iteration over the
-   * resulting iterator has a cubic complexity to the depth of the nesting.
-   *
    * @throws NullPointerException if any of the provided iterators is null
    */
   public static <T> Iterator<T> concat(Iterator<? extends T>... inputs) {
@@ -543,50 +523,9 @@ public final class Iterators {
    * <p>The returned iterator supports {@code remove()} when the corresponding
    * input iterator supports it. The methods of the returned iterator may throw
    * {@code NullPointerException} if any of the input iterators is null.
-   *
-   * <p><b>Note:</b> the current implementation is not suitable for nested
-   * concatenated iterators, i.e. the following should be avoided when in a loop:
-   * {@code iterator = Iterators.concat(iterator, suffix);}, since iteration over the
-   * resulting iterator has a cubic complexity to the depth of the nesting.
    */
-  public static <T> Iterator<T> concat(final Iterator<? extends Iterator<? extends T>> inputs) {
-    checkNotNull(inputs);
-    return new Iterator<T>() {
-      Iterator<? extends T> current = emptyIterator();
-      Iterator<? extends T> removeFrom;
-
-      @Override
-      public boolean hasNext() {
-        // http://code.google.com/p/google-collections/issues/detail?id=151
-        // current.hasNext() might be relatively expensive, worth minimizing.
-        boolean currentHasNext;
-        // checkNotNull eager for GWT
-        // note: it must be here & not where 'current' is assigned,
-        // because otherwise we'll have called inputs.next() before throwing
-        // the first NPE, and the next time around we'll call inputs.next()
-        // again, incorrectly moving beyond the error.
-        while (!(currentHasNext = checkNotNull(current).hasNext()) && inputs.hasNext()) {
-          current = inputs.next();
-        }
-        return currentHasNext;
-      }
-
-      @Override
-      public T next() {
-        if (!hasNext()) {
-          throw new NoSuchElementException();
-        }
-        removeFrom = current;
-        return current.next();
-      }
-
-      @Override
-      public void remove() {
-        checkRemove(removeFrom != null);
-        removeFrom.remove();
-        removeFrom = null;
-      }
-    };
+  public static <T> Iterator<T> concat(Iterator<? extends Iterator<? extends T>> inputs) {
+    return new ConcatenatedIterator<T>(inputs);
   }
 
   /**
@@ -691,7 +630,7 @@ public final class Iterators {
    *     iterator that were of the requested type
    */
   @SuppressWarnings("unchecked") // can cast to <T> because non-Ts are removed
-  @GwtIncompatible("Class.isInstance")
+  @GwtIncompatible // Class.isInstance
   @CheckReturnValue
   public static <T> UnmodifiableIterator<T> filter(Iterator<?> unfiltered, Class<T> desiredType) {
     return (UnmodifiableIterator<T>) filter(unfiltered, instanceOf(desiredType));
@@ -1326,6 +1265,39 @@ public final class Iterators {
         queue.add(nextIter);
       }
       return next;
+    }
+  }
+
+  private static class ConcatenatedIterator<T>
+      extends MultitransformedIterator<Iterator<? extends T>, T>  {
+
+    public ConcatenatedIterator(Iterator<? extends Iterator<? extends T>> iterators) {
+      super(getComponentIterators(iterators));
+    }
+
+    @Override
+    Iterator<? extends T> transform(Iterator<? extends T> iterator) {
+      return iterator;
+    }
+
+    /**
+     * Using the component iterators, rather than the input iterators directly,
+     * allows for higher performance in the case of nested concatenation.
+     */
+    private static <T> Iterator<Iterator<? extends T>> getComponentIterators(
+        Iterator<? extends Iterator<? extends T>> iterators) {
+      return new MultitransformedIterator<Iterator<? extends T>, Iterator<? extends T>>(iterators) {
+        @Override
+        Iterator<? extends Iterator<? extends T>> transform(Iterator<? extends T> iterator) {
+          if (iterator instanceof ConcatenatedIterator) {
+            ConcatenatedIterator<? extends T> concatIterator =
+                (ConcatenatedIterator<? extends T>) iterator;
+            return getComponentIterators(concatIterator.backingIterator);
+          } else {
+            return Iterators.singletonIterator(iterator);
+          }
+        }
+      };
     }
   }
 

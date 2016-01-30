@@ -28,8 +28,6 @@ import com.google.common.annotations.VisibleForTesting;
 import java.util.Arrays;
 import java.util.BitSet;
 
-import javax.annotation.CheckReturnValue;
-
 /**
  * Determines a true or false value for any Java {@code char} value, just as {@link Predicate} does
  * for any {@link Object}. Also offers basic text processing methods based on this function.
@@ -434,7 +432,7 @@ public abstract class CharMatcher implements Predicate<Character> {
    * scenario, it constructs an eight-kilobyte bit array and queries that.
    * In many situations this produces a matcher which is faster to query than the original.
    */
-  @GwtIncompatible("java.util.BitSet")
+  @GwtIncompatible // java.util.BitSet
   CharMatcher precomputedInternal() {
     final BitSet table = new BitSet();
     setBits(table);
@@ -464,7 +462,7 @@ public abstract class CharMatcher implements Predicate<Character> {
   /**
    * Helper method for {@link #precomputedInternal} that doesn't test if the negation is cheaper.
    */
-  @GwtIncompatible("java.util.BitSet")
+  @GwtIncompatible // java.util.BitSet
   private static CharMatcher precomputedPositive(
       int totalCharacters, BitSet table, String description) {
     switch (totalCharacters) {
@@ -483,7 +481,7 @@ public abstract class CharMatcher implements Predicate<Character> {
     }
   }
 
-  @GwtIncompatible("SmallCharMatcher")
+  @GwtIncompatible // SmallCharMatcher
   private static boolean isSmall(int totalCharacters, int tableLength) {
     return totalCharacters <= SmallCharMatcher.MAX_SIZE
         && tableLength > (totalCharacters * 4 * Character.SIZE);
@@ -493,7 +491,7 @@ public abstract class CharMatcher implements Predicate<Character> {
   /**
    * Sets bits in {@code table} matched by this matcher.
    */
-  @GwtIncompatible("java.util.BitSet")
+  @GwtIncompatible // java.util.BitSet
   void setBits(BitSet table) {
     for (int c = Character.MAX_VALUE; c >= Character.MIN_VALUE; c--) {
       if (matches((char) c)) {
@@ -633,7 +631,6 @@ public abstract class CharMatcher implements Predicate<Character> {
    *
    * ... returns {@code "bzr"}.
    */
-  @CheckReturnValue
   public String removeFrom(CharSequence sequence) {
     String string = sequence.toString();
     int pos = indexIn(string);
@@ -671,7 +668,6 @@ public abstract class CharMatcher implements Predicate<Character> {
    *
    * ... returns {@code "aaa"}.
    */
-  @CheckReturnValue
   public String retainFrom(CharSequence sequence) {
     return negate().removeFrom(sequence);
   }
@@ -693,7 +689,6 @@ public abstract class CharMatcher implements Predicate<Character> {
    *        character in {@code sequence}
    * @return the new string
    */
-  @CheckReturnValue
   public String replaceFrom(CharSequence sequence, char replacement) {
     String string = sequence.toString();
     int pos = indexIn(string);
@@ -726,7 +721,6 @@ public abstract class CharMatcher implements Predicate<Character> {
    *        character in {@code sequence}
    * @return the new string
    */
-  @CheckReturnValue
   public String replaceFrom(CharSequence sequence, CharSequence replacement) {
     int replacementLen = replacement.length();
     if (replacementLen == 0) {
@@ -771,7 +765,6 @@ public abstract class CharMatcher implements Predicate<Character> {
    *
    * ... is equivalent to {@link String#trim()}.
    */
-  @CheckReturnValue
   public String trimFrom(CharSequence sequence) {
     int len = sequence.length();
     int first;
@@ -799,7 +792,6 @@ public abstract class CharMatcher implements Predicate<Character> {
    *
    * ... returns {@code "catbab"}.
    */
-  @CheckReturnValue
   public String trimLeadingFrom(CharSequence sequence) {
     int len = sequence.length();
     for (int first = 0; first < len; first++) {
@@ -818,7 +810,6 @@ public abstract class CharMatcher implements Predicate<Character> {
    *
    * ... returns {@code "abacat"}.
    */
-  @CheckReturnValue
   public String trimTrailingFrom(CharSequence sequence) {
     int len = sequence.length();
     for (int last = len - 1; last >= 0; last--) {
@@ -847,7 +838,6 @@ public abstract class CharMatcher implements Predicate<Character> {
    *        matching characters in {@code sequence}
    * @return the new string
    */
-  @CheckReturnValue
   public String collapseFrom(CharSequence sequence, char replacement) {
     // This implementation avoids unnecessary allocation.
     int len = sequence.length();
@@ -873,7 +863,6 @@ public abstract class CharMatcher implements Predicate<Character> {
    * groups of matching characters at the start or end of the sequence are removed without
    * replacement.
    */
-  @CheckReturnValue
   public String trimAndCollapseFrom(CharSequence sequence, char replacement) {
     // This implementation avoids unnecessary allocation.
     int len = sequence.length();
@@ -994,7 +983,7 @@ public abstract class CharMatcher implements Predicate<Character> {
   }
 
   /** Fast matcher using a {@link BitSet} table of matching characters. */
-  @GwtIncompatible("java.util.BitSet")
+  @GwtIncompatible // java.util.BitSet
   private static final class BitSetMatcher extends NamedFastMatcher {
 
     private final BitSet table;
@@ -1244,7 +1233,7 @@ public abstract class CharMatcher implements Predicate<Character> {
       return TABLE.charAt((MULTIPLIER * c) >>> SHIFT) == c;
     }
 
-    @GwtIncompatible("java.util.BitSet")
+    @GwtIncompatible // java.util.BitSet
     @Override
     void setBits(BitSet table) {
       for (int i = 0; i < TABLE.length(); i++) {
@@ -1526,7 +1515,7 @@ public abstract class CharMatcher implements Predicate<Character> {
       return sequence.length() - original.countIn(sequence);
     }
 
-    @GwtIncompatible("java.util.BitSet")
+    @GwtIncompatible // java.util.BitSet
     @Override
     void setBits(BitSet table) {
       BitSet tmp = new BitSet();
@@ -1562,7 +1551,7 @@ public abstract class CharMatcher implements Predicate<Character> {
       return first.matches(c) && second.matches(c);
     }
 
-    @GwtIncompatible("java.util.BitSet")
+    @GwtIncompatible // java.util.BitSet
     @Override
     void setBits(BitSet table) {
       BitSet tmp1 = new BitSet();
@@ -1590,7 +1579,7 @@ public abstract class CharMatcher implements Predicate<Character> {
       second = checkNotNull(b);
     }
 
-    @GwtIncompatible("java.util.BitSet")
+    @GwtIncompatible // java.util.BitSet
     @Override
     void setBits(BitSet table) {
       first.setBits(table);
@@ -1644,7 +1633,7 @@ public abstract class CharMatcher implements Predicate<Character> {
       return isNot(match);
     }
 
-    @GwtIncompatible("java.util.BitSet")
+    @GwtIncompatible // java.util.BitSet
     @Override
     void setBits(BitSet table) {
       table.set(match);
@@ -1680,7 +1669,7 @@ public abstract class CharMatcher implements Predicate<Character> {
       return other.matches(match) ? any() : this;
     }
 
-    @GwtIncompatible("java.util.BitSet")
+    @GwtIncompatible // java.util.BitSet
     @Override
     void setBits(BitSet table) {
       table.set(0, match);
@@ -1718,7 +1707,7 @@ public abstract class CharMatcher implements Predicate<Character> {
       return c == match1 || c == match2;
     }
 
-    @GwtIncompatible("java.util.BitSet")
+    @GwtIncompatible // java.util.BitSet
     @Override
     void setBits(BitSet table) {
       table.set(match1);
@@ -1747,7 +1736,7 @@ public abstract class CharMatcher implements Predicate<Character> {
     }
 
     @Override
-    @GwtIncompatible("java.util.BitSet")
+    @GwtIncompatible // java.util.BitSet
     void setBits(BitSet table) {
       for (char c : chars) {
         table.set(c);
@@ -1782,7 +1771,7 @@ public abstract class CharMatcher implements Predicate<Character> {
       return startInclusive <= c && c <= endInclusive;
     }
 
-    @GwtIncompatible("java.util.BitSet")
+    @GwtIncompatible // java.util.BitSet
     @Override
     void setBits(BitSet table) {
       table.set(startInclusive, endInclusive + 1);

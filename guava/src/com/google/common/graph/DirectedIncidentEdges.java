@@ -25,7 +25,6 @@ import com.google.common.collect.ImmutableSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import javax.annotation.CheckReturnValue;
 import javax.annotation.Nullable;
 
 /**
@@ -34,23 +33,23 @@ import javax.annotation.Nullable;
  * @author Joshua O'Madadhain
  * @param <E> Edge parameter type
  */
-@CheckReturnValue
-final class IncidentEdges<E> {
+final class DirectedIncidentEdges<E> {
 
   private final Set<E> inEdges;
   private final Set<E> outEdges;
 
-  private IncidentEdges(Set<E> inEdges, Set<E> outEdges) {
+  private DirectedIncidentEdges(Set<E> inEdges, Set<E> outEdges) {
     this.inEdges = checkNotNull(inEdges, "inEdges");
     this.outEdges = checkNotNull(outEdges, "outEdges");
   }
 
-  static <E> IncidentEdges<E> of() {
-    return new IncidentEdges<E>(new LinkedHashSet<E>(), new LinkedHashSet<E>());
+  static <E> DirectedIncidentEdges<E> of() {
+    return new DirectedIncidentEdges<E>(new LinkedHashSet<E>(), new LinkedHashSet<E>());
   }
 
-  static <E> IncidentEdges<E> ofImmutable(Set<E> inEdges, Set<E> outEdges) {
-    return new IncidentEdges<E>(ImmutableSet.copyOf(inEdges), ImmutableSet.copyOf(outEdges));
+  static <E> DirectedIncidentEdges<E> ofImmutable(Set<E> inEdges, Set<E> outEdges) {
+    return new DirectedIncidentEdges<E>(ImmutableSet.copyOf(inEdges),
+        ImmutableSet.copyOf(outEdges));
   }
 
   Set<E> inEdges() {
@@ -68,8 +67,8 @@ final class IncidentEdges<E> {
 
   @Override
   public boolean equals(@Nullable Object object) {
-    if (object instanceof IncidentEdges) {
-      IncidentEdges<?> that = (IncidentEdges<?>) object;
+    if (object instanceof DirectedIncidentEdges) {
+      DirectedIncidentEdges<?> that = (DirectedIncidentEdges<?>) object;
       return this.inEdges.equals(that.inEdges)
           && this.outEdges.equals(that.outEdges);
     }

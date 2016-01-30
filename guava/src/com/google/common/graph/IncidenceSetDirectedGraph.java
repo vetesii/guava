@@ -24,11 +24,11 @@ import static com.google.common.graph.GraphErrorMessageUtils.NODE_NOT_IN_GRAPH;
 import static com.google.common.graph.GraphErrorMessageUtils.REUSING_EDGE;
 import static com.google.common.graph.GraphErrorMessageUtils.SELF_LOOPS_NOT_ALLOWED;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 
 import java.util.Collections;
 import java.util.Map;
@@ -114,8 +114,8 @@ import javax.annotation.Nullable;
 final class IncidenceSetDirectedGraph<N, E> implements DirectedGraph<N, E> {
  // TODO(b/24620028): Enable this class to support sorted nodes/edges.
 
-  private final Map<N, IncidentEdges<E>> nodeToIncidentEdges;
-  private final Map<E, IncidentNodes<N>> edgeToIncidentNodes;
+  private final Map<N, DirectedIncidentEdges<E>> nodeToIncidentEdges;
+  private final Map<E, DirectedIncidentNodes<N>> edgeToIncidentNodes;
   private final GraphConfig config;
 
   IncidenceSetDirectedGraph(GraphConfig config) {
@@ -145,7 +145,7 @@ final class IncidenceSetDirectedGraph<N, E> implements DirectedGraph<N, E> {
   @Override
   public Set<E> incidentEdges(Object node) {
     checkNotNull(node, "node");
-    IncidentEdges<E> incidentEdges = nodeToIncidentEdges.get(node);
+    DirectedIncidentEdges<E> incidentEdges = nodeToIncidentEdges.get(node);
     checkArgument(incidentEdges != null, NODE_NOT_IN_GRAPH, node);
     return Sets.union(incidentEdges.inEdges(), incidentEdges.outEdges());
   }
@@ -154,7 +154,7 @@ final class IncidenceSetDirectedGraph<N, E> implements DirectedGraph<N, E> {
   public Set<N> incidentNodes(final Object edge) {
     checkNotNull(edge, "edge");
     // Returning an immutable set here as the edge's endpoints will not change anyway.
-    IncidentNodes<N> endpoints = edgeToIncidentNodes.get(edge);
+    DirectedIncidentNodes<N> endpoints = edgeToIncidentNodes.get(edge);
     checkArgument(endpoints != null, EDGE_NOT_IN_GRAPH, edge);
     return endpoints.asImmutableSet();
   }
@@ -167,7 +167,7 @@ final class IncidenceSetDirectedGraph<N, E> implements DirectedGraph<N, E> {
   @Override
   public Set<E> adjacentEdges(Object edge) {
     checkNotNull(edge, "edge");
-    IncidentNodes<N> endpoints = edgeToIncidentNodes.get(edge);
+    DirectedIncidentNodes<N> endpoints = edgeToIncidentNodes.get(edge);
     checkArgument(endpoints != null, EDGE_NOT_IN_GRAPH, edge);
     return Sets.difference(
         Sets.union(incidentEdges(endpoints.target()), incidentEdges(endpoints.source())),
@@ -189,9 +189,9 @@ final class IncidenceSetDirectedGraph<N, E> implements DirectedGraph<N, E> {
   public Set<E> edgesConnecting(Object node1, Object node2) {
     checkNotNull(node1, "node1");
     checkNotNull(node2, "node2");
-    IncidentEdges<E> incidentEdgesN1 = nodeToIncidentEdges.get(node1);
+    DirectedIncidentEdges<E> incidentEdgesN1 = nodeToIncidentEdges.get(node1);
     checkArgument(incidentEdgesN1 != null, NODE_NOT_IN_GRAPH, node1);
-    IncidentEdges<E> incidentEdgesN2 = nodeToIncidentEdges.get(node2);
+    DirectedIncidentEdges<E> incidentEdgesN2 = nodeToIncidentEdges.get(node2);
     checkArgument(incidentEdgesN2 != null, NODE_NOT_IN_GRAPH, node2);
     Set<E> outEdges = incidentEdgesN1.outEdges();
     Set<E> inEdges = incidentEdgesN2.inEdges();
@@ -203,7 +203,7 @@ final class IncidenceSetDirectedGraph<N, E> implements DirectedGraph<N, E> {
   @Override
   public Set<E> inEdges(Object node) {
     checkNotNull(node, "node");
-    IncidentEdges<E> incidentEdges = nodeToIncidentEdges.get(node);
+    DirectedIncidentEdges<E> incidentEdges = nodeToIncidentEdges.get(node);
     checkArgument(incidentEdges != null, NODE_NOT_IN_GRAPH, node);
     return Collections.unmodifiableSet(incidentEdges.inEdges());
   }
@@ -211,7 +211,7 @@ final class IncidenceSetDirectedGraph<N, E> implements DirectedGraph<N, E> {
   @Override
   public Set<E> outEdges(Object node) {
     checkNotNull(node, "node");
-    IncidentEdges<E> incidentEdges = nodeToIncidentEdges.get(node);
+    DirectedIncidentEdges<E> incidentEdges = nodeToIncidentEdges.get(node);
     checkArgument(incidentEdges != null, NODE_NOT_IN_GRAPH, node);
     return Collections.unmodifiableSet(incidentEdges.outEdges());
   }
@@ -219,7 +219,7 @@ final class IncidenceSetDirectedGraph<N, E> implements DirectedGraph<N, E> {
   @Override
   public Set<N> predecessors(Object node) {
     checkNotNull(node, "node");
-    IncidentEdges<E> incidentEdges = nodeToIncidentEdges.get(node);
+    DirectedIncidentEdges<E> incidentEdges = nodeToIncidentEdges.get(node);
     checkArgument(incidentEdges != null, NODE_NOT_IN_GRAPH, node);
     final Set<E> inEdges = incidentEdges.inEdges();
     return new SetView<N>() {
@@ -242,7 +242,7 @@ final class IncidenceSetDirectedGraph<N, E> implements DirectedGraph<N, E> {
   @Override
   public Set<N> successors(Object node) {
     checkNotNull(node, "node");
-    IncidentEdges<E> incidentEdges = nodeToIncidentEdges.get(node);
+    DirectedIncidentEdges<E> incidentEdges = nodeToIncidentEdges.get(node);
     checkArgument(incidentEdges != null, NODE_NOT_IN_GRAPH, node);
     final Set<E> outEdges = incidentEdges.outEdges();
     return new SetView<N>() {
@@ -273,7 +273,7 @@ final class IncidenceSetDirectedGraph<N, E> implements DirectedGraph<N, E> {
   @Override
   public long inDegree(Object node) {
     checkNotNull(node, "node");
-    IncidentEdges<E> incidentEdges = nodeToIncidentEdges.get(node);
+    DirectedIncidentEdges<E> incidentEdges = nodeToIncidentEdges.get(node);
     checkArgument(incidentEdges != null, NODE_NOT_IN_GRAPH, node);
     return incidentEdges.inEdges().size();
   }
@@ -281,7 +281,7 @@ final class IncidenceSetDirectedGraph<N, E> implements DirectedGraph<N, E> {
   @Override
   public long outDegree(Object node) {
     checkNotNull(node, "node");
-    IncidentEdges<E> incidentEdges = nodeToIncidentEdges.get(node);
+    DirectedIncidentEdges<E> incidentEdges = nodeToIncidentEdges.get(node);
     checkArgument(incidentEdges != null, NODE_NOT_IN_GRAPH, node);
     return incidentEdges.outEdges().size();
   }
@@ -289,7 +289,7 @@ final class IncidenceSetDirectedGraph<N, E> implements DirectedGraph<N, E> {
   @Override
   public N source(Object edge) {
     checkNotNull(edge, "edge");
-    IncidentNodes<N> endpoints = edgeToIncidentNodes.get(edge);
+    DirectedIncidentNodes<N> endpoints = edgeToIncidentNodes.get(edge);
     checkArgument(endpoints != null, EDGE_NOT_IN_GRAPH, edge);
     return endpoints.source();
   }
@@ -297,7 +297,7 @@ final class IncidenceSetDirectedGraph<N, E> implements DirectedGraph<N, E> {
   @Override
   public N target(Object edge) {
     checkNotNull(edge, "edge");
-    IncidentNodes<N> endpoints = edgeToIncidentNodes.get(edge);
+    DirectedIncidentNodes<N> endpoints = edgeToIncidentNodes.get(edge);
     checkArgument(endpoints != null, EDGE_NOT_IN_GRAPH, edge);
     return endpoints.target();
   }
@@ -305,6 +305,7 @@ final class IncidenceSetDirectedGraph<N, E> implements DirectedGraph<N, E> {
   // Element Mutation
 
   @Override
+  @CanIgnoreReturnValue
   public boolean addNode(N node) {
     checkNotNull(node, "node");
     if (containsNode(node)) {
@@ -312,7 +313,7 @@ final class IncidenceSetDirectedGraph<N, E> implements DirectedGraph<N, E> {
     }
     // TODO(user): Enable users to specify the expected number of neighbors
     // of a new node.
-    nodeToIncidentEdges.put(node, IncidentEdges.<E>of());
+    nodeToIncidentEdges.put(node, DirectedIncidentEdges.<E>of());
     return true;
   }
 
@@ -330,36 +331,33 @@ final class IncidenceSetDirectedGraph<N, E> implements DirectedGraph<N, E> {
    *         Also, if self-loops are not allowed, and {@code node1} is equal to {@code node2}.
    */
   @Override
+  @CanIgnoreReturnValue
   public boolean addEdge(E edge, N node1, N node2) {
     checkNotNull(edge, "edge");
     checkNotNull(node1, "node1");
     checkNotNull(node2, "node2");
-    checkArgument(config.isSelfLoopsAllowed() || !node1.equals(node2),
+    DirectedIncidentNodes<N> endpoints = DirectedIncidentNodes.of(node1, node2);
+    checkArgument(config.isSelfLoopsAllowed() || !endpoints.isSelfLoop(),
         SELF_LOOPS_NOT_ALLOWED, node1);
-    IncidentNodes<N> endpoints = edgeToIncidentNodes.get(edge);
-    if (endpoints != null) {
-      N source = endpoints.source();
-      N target = endpoints.target();
-      checkArgument(
-          source.equals(node1) && target.equals(node2),
-          REUSING_EDGE,
-          edge,
-          ImmutableList.of(source, target),
-          ImmutableList.of(node1, node2));
+    DirectedIncidentNodes<N> previousEndpoints = edgeToIncidentNodes.get(edge);
+    if (previousEndpoints != null) {
+      checkArgument(previousEndpoints.equals(endpoints),
+          REUSING_EDGE, edge, previousEndpoints, endpoints);
       return false;
     } else if (!config.isMultigraph() && containsNode(node1) && containsNode(node2)) {
       E edgeConnecting = Iterables.getOnlyElement(edgesConnecting(node1, node2), null);
       checkArgument(edgeConnecting == null, ADDING_PARALLEL_EDGE, node1, node2, edgeConnecting);
     }
     addNode(node1);
-    addNode(node2);
-    edgeToIncidentNodes.put(edge, IncidentNodes.of(node1, node2));
     nodeToIncidentEdges.get(node1).outEdges().add(edge);
+    addNode(node2);
     nodeToIncidentEdges.get(node2).inEdges().add(edge);
+    edgeToIncidentNodes.put(edge, endpoints);
     return true;
   }
 
   @Override
+  @CanIgnoreReturnValue
   public boolean removeNode(Object node) {
     checkNotNull(node, "node");
     // Return false if the node doesn't exist in the graph
@@ -376,10 +374,11 @@ final class IncidenceSetDirectedGraph<N, E> implements DirectedGraph<N, E> {
   }
 
   @Override
+  @CanIgnoreReturnValue
   public boolean removeEdge(Object edge) {
     checkNotNull(edge, "edge");
     // Return false if the edge doesn't exist in the graph
-    IncidentNodes<N> endpoints = edgeToIncidentNodes.get(edge);
+    DirectedIncidentNodes<N> endpoints = edgeToIncidentNodes.get(edge);
     if (endpoints == null) {
       return false;
     }

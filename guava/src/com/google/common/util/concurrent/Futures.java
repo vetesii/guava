@@ -127,7 +127,7 @@ public final class Futures extends GwtFuturesCatchingSpecialization {
    *
    * @since 9.0 (source-compatible since 1.0)
    */
-  @GwtIncompatible("TODO")
+  @GwtIncompatible // TODO
   @CheckReturnValue
   public static <V, X extends Exception> CheckedFuture<V, X> makeChecked(
       ListenableFuture<V> future, Function<? super Exception, X> mapper) {
@@ -157,7 +157,7 @@ public final class Futures extends GwtFuturesCatchingSpecialization {
    * returns {@code true}. Calling {@code get()} or {@code checkedGet()} will immediately return the
    * provided value.
    */
-  @GwtIncompatible("TODO")
+  @GwtIncompatible // TODO
   @CheckReturnValue
   public static <V, X extends Exception> CheckedFuture<V, X> immediateCheckedFuture(
       @Nullable V value) {
@@ -183,7 +183,7 @@ public final class Futures extends GwtFuturesCatchingSpecialization {
    *
    * @since 14.0
    */
-  @GwtIncompatible("TODO")
+  @GwtIncompatible // TODO
   @CheckReturnValue
   public static <V> ListenableFuture<V> immediateCancelledFuture() {
     return new ImmediateCancelledFuture<V>();
@@ -197,137 +197,12 @@ public final class Futures extends GwtFuturesCatchingSpecialization {
    * Exception} wrapped in an {@code ExecutionException}, and calling {@code checkedGet()} will
    * throw the provided exception itself.
    */
-  @GwtIncompatible("TODO")
+  @GwtIncompatible // TODO
   @CheckReturnValue
   public static <V, X extends Exception> CheckedFuture<V, X> immediateFailedCheckedFuture(
       X exception) {
     checkNotNull(exception);
     return new ImmediateFailedCheckedFuture<V, X>(exception);
-  }
-
-  /**
-   * Returns a {@code Future} whose result is taken from the given primary {@code input} or, if the
-   * primary input fails, from the {@code Future} provided by the {@code fallback}. {@link
-   * FutureFallback#create} is not invoked until the primary input has failed, so if the primary
-   * input succeeds, it is never invoked. If, during the invocation of {@code fallback}, an
-   * exception is thrown, this exception is used as the result of the output {@code Future}.
-   *
-   * <p>Below is an example of a fallback that returns a default value if an exception occurs:
-   *
-   * <pre>   {@code
-   *   ListenableFuture<Integer> fetchCounterFuture = ...;
-   *
-   *   // Falling back to a zero counter in case an exception happens when
-   *   // processing the RPC to fetch counters.
-   *   ListenableFuture<Integer> faultTolerantFuture = Futures.withFallback(
-   *       fetchCounterFuture, new FutureFallback<Integer>() {
-   *         public ListenableFuture<Integer> create(Throwable t) {
-   *           // Returning "0" as the default for the counter when the
-   *           // exception happens.
-   *           return immediateFuture(0);
-   *         }
-   *       });}</pre>
-   *
-   * <p>The fallback can also choose to propagate the original exception when desired:
-   *
-   * <pre>   {@code
-   *   ListenableFuture<Integer> fetchCounterFuture = ...;
-   *
-   *   // Falling back to a zero counter only in case the exception was a
-   *   // TimeoutException.
-   *   ListenableFuture<Integer> faultTolerantFuture = Futures.withFallback(
-   *       fetchCounterFuture, new FutureFallback<Integer>() {
-   *         public ListenableFuture<Integer> create(Throwable t) {
-   *           if (t instanceof TimeoutException) {
-   *             return immediateFuture(0);
-   *           }
-   *           return immediateFailedFuture(t);
-   *         }
-   *       });}</pre>
-   *
-   * <p>This overload, which does not accept an executor, uses {@code directExecutor}, a dangerous
-   * choice in some cases. See the discussion in the {@link ListenableFuture#addListener
-   * ListenableFuture.addListener} documentation. The documentation's warnings about "lightweight
-   * listeners" refer here to the work done during {@code FutureFallback.create}, not to any work
-   * done to complete the returned {@code Future}.
-   *
-   * @param input the primary input {@code Future}
-   * @param fallback the {@link FutureFallback} implementation to be called if {@code input} fails
-   * @since 14.0
-   * @deprecated Use {@link #catchingAsync(ListenableFuture, Class, AsyncFunction)
-   *     catchingAsync(input, Throwable.class, fallbackImplementedAsAnAsyncFunction)}, usually
-   *     replacing {@code Throwable.class} with the specific type you want to handle. This method
-   *     will be removed in Guava release 20.0.
-   */
-  @Deprecated
-  @CheckReturnValue
-  public static <V> ListenableFuture<V> withFallback(
-      ListenableFuture<? extends V> input, FutureFallback<? extends V> fallback) {
-    return withFallback(input, fallback, directExecutor());
-  }
-
-  /**
-   * Returns a {@code Future} whose result is taken from the given primary {@code input} or, if the
-   * primary input fails, from the {@code Future} provided by the {@code fallback}. {@link
-   * FutureFallback#create} is not invoked until the primary input has failed, so if the primary
-   * input succeeds, it is never invoked. If, during the invocation of {@code fallback}, an
-   * exception is thrown, this exception is used as the result of the output {@code Future}.
-   *
-   * <p>Below is an example of a fallback that returns a default value if an exception occurs:
-   *
-   * <pre>   {@code
-   *   ListenableFuture<Integer> fetchCounterFuture = ...;
-   *
-   *   // Falling back to a zero counter in case an exception happens when
-   *   // processing the RPC to fetch counters.
-   *   ListenableFuture<Integer> faultTolerantFuture = Futures.withFallback(
-   *       fetchCounterFuture, new FutureFallback<Integer>() {
-   *         public ListenableFuture<Integer> create(Throwable t) {
-   *           // Returning "0" as the default for the counter when the
-   *           // exception happens.
-   *           return immediateFuture(0);
-   *         }
-   *       }, directExecutor());}</pre>
-   *
-   * <p>The fallback can also choose to propagate the original exception when desired:
-   *
-   * <pre>   {@code
-   *   ListenableFuture<Integer> fetchCounterFuture = ...;
-   *
-   *   // Falling back to a zero counter only in case the exception was a
-   *   // TimeoutException.
-   *   ListenableFuture<Integer> faultTolerantFuture = Futures.withFallback(
-   *       fetchCounterFuture, new FutureFallback<Integer>() {
-   *         public ListenableFuture<Integer> create(Throwable t) {
-   *           if (t instanceof TimeoutException) {
-   *             return immediateFuture(0);
-   *           }
-   *           return immediateFailedFuture(t);
-   *         }
-   *       }, directExecutor());}</pre>
-   *
-   * <p>When selecting an executor, note that {@code directExecutor} is dangerous in some cases. See
-   * the discussion in the {@link ListenableFuture#addListener ListenableFuture.addListener}
-   * documentation. The documentation's warnings about "lightweight listeners" refer here to the
-   * work done during {@code FutureFallback.create}, not to any work done to complete the returned
-   * {@code Future}.
-   *
-   * @param input the primary input {@code Future}
-   * @param fallback the {@link FutureFallback} implementation to be called if {@code input} fails
-   * @param executor the executor that runs {@code fallback} if {@code input} fails
-   * @since 14.0
-   * @deprecated Use {@link #catchingAsync(ListenableFuture, Class, AsyncFunction, Executor)
-   *     catchingAsync(input, Throwable.class, fallbackImplementedAsAnAsyncFunction, executor)},
-   *     usually replacing {@code Throwable.class} with the specific type you want to handle. This
-   *     method will be removed in Guava release 20.0.
-   */
-  @Deprecated
-  @CheckReturnValue
-  public static <V> ListenableFuture<V> withFallback(
-      ListenableFuture<? extends V> input,
-      FutureFallback<? extends V> fallback,
-      Executor executor) {
-    return catchingAsync(input, Throwable.class, asAsyncFunction(fallback), executor);
   }
 
   /**
@@ -366,7 +241,7 @@ public final class Futures extends GwtFuturesCatchingSpecialization {
    *     the expected exception type
    * @since 19.0
    */
-  @GwtIncompatible("AVAILABLE but requires exceptionType to be Throwable.class")
+  @GwtIncompatible // AVAILABLE but requires exceptionType to be Throwable.class
   @CheckReturnValue
   public static <V, X extends Throwable> ListenableFuture<V> catching(
       ListenableFuture<? extends V> input,
@@ -412,7 +287,7 @@ public final class Futures extends GwtFuturesCatchingSpecialization {
    * @param executor the executor that runs {@code fallback} if {@code input} fails
    * @since 19.0
    */
-  @GwtIncompatible("AVAILABLE but requires exceptionType to be Throwable.class")
+  @GwtIncompatible // AVAILABLE but requires exceptionType to be Throwable.class
   @CheckReturnValue
   public static <V, X extends Throwable> ListenableFuture<V> catching(
       ListenableFuture<? extends V> input,
@@ -478,7 +353,7 @@ public final class Futures extends GwtFuturesCatchingSpecialization {
    *     with the expected exception type
    * @since 19.0 (similar functionality in 14.0 as {@code withFallback})
    */
-  @GwtIncompatible("AVAILABLE but requires exceptionType to be Throwable.class")
+  @GwtIncompatible // AVAILABLE but requires exceptionType to be Throwable.class
   // TODO(kak): @CheckReturnValue
   public static <V, X extends Throwable> ListenableFuture<V> catchingAsync(
       ListenableFuture<? extends V> input,
@@ -544,7 +419,7 @@ public final class Futures extends GwtFuturesCatchingSpecialization {
    * @param executor the executor that runs {@code fallback} if {@code input} fails
    * @since 19.0 (similar functionality in 14.0 as {@code withFallback})
    */
-  @GwtIncompatible("AVAILABLE but requires exceptionType to be Throwable.class")
+  @GwtIncompatible // AVAILABLE but requires exceptionType to be Throwable.class
   // TODO(kak): @CheckReturnValue
   public static <V, X extends Throwable> ListenableFuture<V> catchingAsync(
       ListenableFuture<? extends V> input,
@@ -552,20 +427,6 @@ public final class Futures extends GwtFuturesCatchingSpecialization {
       AsyncFunction<? super X, ? extends V> fallback,
       Executor executor) {
     return AbstractCatchingFuture.create(input, exceptionType, fallback, executor);
-  }
-
-  @Deprecated
-  static <V> AsyncFunction<Throwable, V> asAsyncFunction(final FutureFallback<V> fallback) {
-    checkNotNull(fallback);
-    return new AsyncFunction<Throwable, V>() {
-      @Override
-      public ListenableFuture<V> apply(Throwable t) throws Exception {
-        return checkNotNull(
-            fallback.create(t),
-            "FutureFallback.create returned null instead of a "
-                + "Future. Did you mean to return immediateFuture(null)?");
-      }
-    };
   }
 
   /**
@@ -581,7 +442,7 @@ public final class Futures extends GwtFuturesCatchingSpecialization {
    *
    * @since 19.0
    */
-  @GwtIncompatible("java.util.concurrent.ScheduledExecutorService")
+  @GwtIncompatible // java.util.concurrent.ScheduledExecutorService
   @CheckReturnValue
   public static <V> ListenableFuture<V> withTimeout(
       ListenableFuture<V> delegate,
@@ -589,99 +450,6 @@ public final class Futures extends GwtFuturesCatchingSpecialization {
       TimeUnit unit,
       ScheduledExecutorService scheduledExecutor) {
     return TimeoutFuture.create(delegate, time, unit, scheduledExecutor);
-  }
-
-  /**
-   * Returns a new {@code ListenableFuture} whose result is asynchronously derived from the result
-   * of the given {@code Future}. More precisely, the returned {@code Future} takes its result from
-   * a {@code Future} produced by applying the given {@code AsyncFunction} to the result of the
-   * original {@code Future}. Example:
-   *
-   * <pre>   {@code
-   *   ListenableFuture<RowKey> rowKeyFuture = indexService.lookUp(query);
-   *   AsyncFunction<RowKey, QueryResult> queryFunction =
-   *       new AsyncFunction<RowKey, QueryResult>() {
-   *         public ListenableFuture<QueryResult> apply(RowKey rowKey) {
-   *           return dataService.read(rowKey);
-   *         }
-   *       };
-   *   ListenableFuture<QueryResult> queryFuture =
-   *       transform(rowKeyFuture, queryFunction);}</pre>
-   *
-   * <p>This overload, which does not accept an executor, uses {@code directExecutor}, a dangerous
-   * choice in some cases. See the discussion in the {@link ListenableFuture#addListener
-   * ListenableFuture.addListener} documentation. The documentation's warnings about "lightweight
-   * listeners" refer here to the work done during {@code AsyncFunction.apply}, not to any work done
-   * to complete the returned {@code Future}.
-   *
-   * <p>The returned {@code Future} attempts to keep its cancellation state in sync with that of the
-   * input future and that of the future returned by the function. That is, if the returned {@code
-   * Future} is cancelled, it will attempt to cancel the other two, and if either of the other two
-   * is cancelled, the returned {@code Future} will receive a callback in which it will attempt to
-   * cancel itself.
-   *
-   * @param input The future to transform
-   * @param function A function to transform the result of the input future to the result of the
-   *     output future
-   * @return A future that holds result of the function (if the input succeeded) or the original
-   *     input's failure (if not)
-   * @since 11.0
-   * @deprecated These {@code AsyncFunction} overloads of {@code transform} are being renamed to
-   *     {@code transformAsync}. (The {@code Function} overloads are keeping the "transform" name.)
-   *     This method will be removed in Guava release 20.0.
-   */
-  @Deprecated
-  public static <I, O> ListenableFuture<O> transform(
-      ListenableFuture<I> input, AsyncFunction<? super I, ? extends O> function) {
-    return transformAsync(input, function);
-  }
-
-  /**
-   * Returns a new {@code ListenableFuture} whose result is asynchronously derived from the result
-   * of the given {@code Future}. More precisely, the returned {@code Future} takes its result from
-   * a {@code Future} produced by applying the given {@code AsyncFunction} to the result of the
-   * original {@code Future}. Example:
-   *
-   * <pre>   {@code
-   *   ListenableFuture<RowKey> rowKeyFuture = indexService.lookUp(query);
-   *   AsyncFunction<RowKey, QueryResult> queryFunction =
-   *       new AsyncFunction<RowKey, QueryResult>() {
-   *         public ListenableFuture<QueryResult> apply(RowKey rowKey) {
-   *           return dataService.read(rowKey);
-   *         }
-   *       };
-   *   ListenableFuture<QueryResult> queryFuture =
-   *       transform(rowKeyFuture, queryFunction, executor);}</pre>
-   *
-   * <p>When selecting an executor, note that {@code directExecutor} is dangerous in some cases. See
-   * the discussion in the {@link ListenableFuture#addListener ListenableFuture.addListener}
-   * documentation. The documentation's warnings about "lightweight listeners" refer here to the
-   * work done during {@code AsyncFunction.apply}, not to any work done to complete the returned
-   * {@code Future}.
-   *
-   * <p>The returned {@code Future} attempts to keep its cancellation state in sync with that of the
-   * input future and that of the future returned by the chain function. That is, if the returned
-   * {@code Future} is cancelled, it will attempt to cancel the other two, and if either of the
-   * other two is cancelled, the returned {@code Future} will receive a callback in which it will
-   * attempt to cancel itself.
-   *
-   * @param input The future to transform
-   * @param function A function to transform the result of the input future to the result of the
-   *     output future
-   * @param executor Executor to run the function in.
-   * @return A future that holds result of the function (if the input succeeded) or the original
-   *     input's failure (if not)
-   * @since 11.0
-   * @deprecated These {@code AsyncFunction} overloads of {@code transform} are being renamed to
-   *     {@code transformAsync}. (The {@code Function} overloads are keeping the "transform" name.)
-   *     This method will be removed in Guava release 20.0.
-   */
-  @Deprecated
-  public static <I, O> ListenableFuture<O> transform(
-      ListenableFuture<I> input,
-      AsyncFunction<? super I, ? extends O> function,
-      Executor executor) {
-    return transformAsync(input, function, executor);
   }
 
   /**
@@ -876,7 +644,7 @@ public final class Futures extends GwtFuturesCatchingSpecialization {
    * @return A future that returns the result of the transformation.
    * @since 10.0
    */
-  @GwtIncompatible("TODO")
+  @GwtIncompatible // TODO
   @CheckReturnValue
   public static <I, O> Future<O> lazyTransform(
       final Future<I> input, final Function<? super I, ? extends O> function) {
@@ -1146,7 +914,7 @@ public final class Futures extends GwtFuturesCatchingSpecialization {
    *
    * @since 15.0
    */
-  @GwtIncompatible("TODO")
+  @GwtIncompatible // TODO
   @CheckReturnValue
   public static <V> ListenableFuture<V> nonCancellationPropagating(ListenableFuture<V> future) {
     return new NonCancellationPropagatingFuture<V>(future);
@@ -1155,7 +923,7 @@ public final class Futures extends GwtFuturesCatchingSpecialization {
   /**
    * A wrapped future that does not propagate cancellation to its delegate.
    */
-  @GwtIncompatible("TODO")
+  @GwtIncompatible // TODO
   private static final class NonCancellationPropagatingFuture<V>
       extends AbstractFuture.TrustedFuture<V> {
     NonCancellationPropagatingFuture(final ListenableFuture<V> delegate) {
@@ -1227,7 +995,7 @@ public final class Futures extends GwtFuturesCatchingSpecialization {
    * @since 17.0
    */
   @Beta
-  @GwtIncompatible("TODO")
+  @GwtIncompatible // TODO
   @CheckReturnValue
   public static <T> ImmutableList<ListenableFuture<T>> inCompletionOrder(
       Iterable<? extends ListenableFuture<? extends T>> futures) {
@@ -1400,109 +1168,9 @@ public final class Futures extends GwtFuturesCatchingSpecialization {
    * @throws CancellationException if {@code get} throws a {@code CancellationException}
    * @throws IllegalArgumentException if {@code exceptionClass} extends {@code RuntimeException} or
    *     does not have a suitable constructor
-   * @since 10.0
-   * @deprecated Use {@link #getChecked(Future, Class)}. This method will be removed in Guava
-   *     release 20.0.
-   */
-  @Deprecated
-  @GwtIncompatible("reflection")
-  public static <V, X extends Exception> V get(Future<V> future, Class<X> exceptionClass) throws X {
-    return getChecked(future, exceptionClass);
-  }
-
-  /**
-   * Returns the result of {@link Future#get(long, TimeUnit)}, converting most exceptions to a new
-   * instance of the given checked exception type. This reduces boilerplate for a common use of
-   * {@code Future} in which it is unnecessary to programmatically distinguish between exception
-   * types or to extract other information from the exception instance.
-   *
-   * <p>Exceptions from {@code Future.get} are treated as follows:
-   * <ul>
-   * <li>Any {@link ExecutionException} has its <i>cause</i> wrapped in an {@code X} if the cause is
-   *     a checked exception, an {@link UncheckedExecutionException} if the cause is a {@code
-   *     RuntimeException}, or an {@link ExecutionError} if the cause is an {@code Error}.
-   * <li>Any {@link InterruptedException} is wrapped in an {@code X} (after restoring the
-   *     interrupt).
-   * <li>Any {@link TimeoutException} is wrapped in an {@code X}.
-   * <li>Any {@link CancellationException} is propagated untouched, as is any other {@link
-   *     RuntimeException} (though {@code get} implementations are discouraged from throwing such
-   *     exceptions).
-   * </ul>
-   *
-   * <p>The overall principle is to continue to treat every checked exception as a checked
-   * exception, every unchecked exception as an unchecked exception, and every error as an error. In
-   * addition, the cause of any {@code ExecutionException} is wrapped in order to ensure that the
-   * new stack trace matches that of the current thread.
-   *
-   * <p>Instances of {@code exceptionClass} are created by choosing an arbitrary public constructor
-   * that accepts zero or more arguments, all of type {@code String} or {@code Throwable}
-   * (preferring constructors with at least one {@code String}) and calling the constructor via
-   * reflection. If the exception did not already have a cause, one is set by calling {@link
-   * Throwable#initCause(Throwable)} on it. If no such constructor exists, an {@code
-   * IllegalArgumentException} is thrown.
-   *
-   * @throws X if {@code get} throws any checked exception except for an {@code ExecutionException}
-   *     whose cause is not itself a checked exception
-   * @throws UncheckedExecutionException if {@code get} throws an {@code ExecutionException} with a
-   *     {@code RuntimeException} as its cause
-   * @throws ExecutionError if {@code get} throws an {@code ExecutionException} with an {@code
-   *     Error} as its cause
-   * @throws CancellationException if {@code get} throws a {@code CancellationException}
-   * @throws IllegalArgumentException if {@code exceptionClass} extends {@code RuntimeException} or
-   *     does not have a suitable constructor
-   * @since 10.0
-   * @deprecated Use {@link #getChecked(Future, Class, long, TimeUnit)}, noting the change in
-   *     parameter order. This method will be removed in Guava release 20.0.
-   */
-  @Deprecated
-  @GwtIncompatible("reflection")
-  public static <V, X extends Exception> V get(
-      Future<V> future, long timeout, TimeUnit unit, Class<X> exceptionClass) throws X {
-    return getChecked(future, exceptionClass, timeout, unit);
-  }
-
-  /**
-   * Returns the result of {@link Future#get()}, converting most exceptions to a new instance of the
-   * given checked exception type. This reduces boilerplate for a common use of {@code Future} in
-   * which it is unnecessary to programmatically distinguish between exception types or to extract
-   * other information from the exception instance.
-   *
-   * <p>Exceptions from {@code Future.get} are treated as follows:
-   * <ul>
-   * <li>Any {@link ExecutionException} has its <i>cause</i> wrapped in an {@code X} if the cause is
-   *     a checked exception, an {@link UncheckedExecutionException} if the cause is a {@code
-   *     RuntimeException}, or an {@link ExecutionError} if the cause is an {@code Error}.
-   * <li>Any {@link InterruptedException} is wrapped in an {@code X} (after restoring the
-   *     interrupt).
-   * <li>Any {@link CancellationException} is propagated untouched, as is any other {@link
-   *     RuntimeException} (though {@code get} implementations are discouraged from throwing such
-   *     exceptions).
-   * </ul>
-   *
-   * <p>The overall principle is to continue to treat every checked exception as a checked
-   * exception, every unchecked exception as an unchecked exception, and every error as an error. In
-   * addition, the cause of any {@code ExecutionException} is wrapped in order to ensure that the
-   * new stack trace matches that of the current thread.
-   *
-   * <p>Instances of {@code exceptionClass} are created by choosing an arbitrary public constructor
-   * that accepts zero or more arguments, all of type {@code String} or {@code Throwable}
-   * (preferring constructors with at least one {@code String}) and calling the constructor via
-   * reflection. If the exception did not already have a cause, one is set by calling {@link
-   * Throwable#initCause(Throwable)} on it. If no such constructor exists, an {@code
-   * IllegalArgumentException} is thrown.
-   *
-   * @throws X if {@code get} throws any checked exception except for an {@code ExecutionException}
-   *     whose cause is not itself a checked exception
-   * @throws UncheckedExecutionException if {@code get} throws an {@code ExecutionException} with a
-   *     {@code RuntimeException} as its cause
-   * @throws ExecutionError if {@code get} throws an {@code ExecutionException} with an {@code
-   *     Error} as its cause
-   * @throws CancellationException if {@code get} throws a {@code CancellationException}
-   * @throws IllegalArgumentException if {@code exceptionClass} extends {@code RuntimeException} or
-   *     does not have a suitable constructor
    * @since 19.0 (in 10.0 as {@code get})
    */
-  @GwtIncompatible("reflection")
+  @GwtIncompatible // reflection
   public static <V, X extends Exception> V getChecked(Future<V> future, Class<X> exceptionClass)
       throws X {
     return FuturesGetChecked.getChecked(future, exceptionClass);
@@ -1550,7 +1218,7 @@ public final class Futures extends GwtFuturesCatchingSpecialization {
    *     does not have a suitable constructor
    * @since 19.0 (in 10.0 as {@code get} and with different parameter order)
    */
-  @GwtIncompatible("reflection")
+  @GwtIncompatible // reflection
   public static <V, X extends Exception> V getChecked(
       Future<V> future, Class<X> exceptionClass, long timeout, TimeUnit unit) throws X {
     return FuturesGetChecked.getChecked(future, exceptionClass, timeout, unit);
@@ -1589,7 +1257,7 @@ public final class Futures extends GwtFuturesCatchingSpecialization {
    * @throws CancellationException if {@code get} throws a {@code CancellationException}
    * @since 10.0
    */
-  @GwtIncompatible("TODO")
+  @GwtIncompatible // TODO
   public static <V> V getUnchecked(Future<V> future) {
     checkNotNull(future);
     try {
@@ -1600,7 +1268,7 @@ public final class Futures extends GwtFuturesCatchingSpecialization {
     }
   }
 
-  @GwtIncompatible("TODO")
+  @GwtIncompatible // TODO
   private static void wrapAndThrowUnchecked(Throwable cause) {
     if (cause instanceof Error) {
       throw new ExecutionError((Error) cause);
@@ -1627,7 +1295,7 @@ public final class Futures extends GwtFuturesCatchingSpecialization {
   /**
    * A checked future that uses a function to map from exceptions to the appropriate checked type.
    */
-  @GwtIncompatible("TODO")
+  @GwtIncompatible // TODO
   private static class MappingCheckedFuture<V, X extends Exception>
       extends AbstractCheckedFuture<V, X> {
 

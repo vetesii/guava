@@ -36,7 +36,6 @@ import java.util.List;
 import java.util.RandomAccess;
 
 import javax.annotation.CheckForNull;
-import javax.annotation.CheckReturnValue;
 import javax.annotation.Nullable;
 
 /**
@@ -50,7 +49,6 @@ import javax.annotation.Nullable;
  * @author Kevin Bourrillion
  * @since 1.0
  */
-@CheckReturnValue
 @GwtCompatible(emulated = true)
 public final class Ints {
   private Ints() {}
@@ -296,7 +294,7 @@ public final class Ints {
    * {@link com.google.common.io.ByteStreams#newDataOutput()} to get a growable
    * buffer.
    */
-  @GwtIncompatible("doesn't work")
+  @GwtIncompatible // doesn't work
   public static byte[] toByteArray(int value) {
     return new byte[] {
       (byte) (value >> 24),
@@ -318,7 +316,7 @@ public final class Ints {
    *
    * @throws IllegalArgumentException if {@code bytes} has fewer than 4 elements
    */
-  @GwtIncompatible("doesn't work")
+  @GwtIncompatible // doesn't work
   public static int fromByteArray(byte[] bytes) {
     checkArgument(bytes.length >= BYTES, "array too small: %s < %s", bytes.length, BYTES);
     return fromBytes(bytes[0], bytes[1], bytes[2], bytes[3]);
@@ -331,7 +329,7 @@ public final class Ints {
    *
    * @since 7.0
    */
-  @GwtIncompatible("doesn't work")
+  @GwtIncompatible // doesn't work
   public static int fromBytes(byte b1, byte b2, byte b3, byte b4) {
     return b1 << 24 | (b2 & 0xFF) << 16 | (b3 & 0xFF) << 8 | (b4 & 0xFF);
   }
@@ -397,16 +395,7 @@ public final class Ints {
   public static int[] ensureCapacity(int[] array, int minLength, int padding) {
     checkArgument(minLength >= 0, "Invalid minLength: %s", minLength);
     checkArgument(padding >= 0, "Invalid padding: %s", padding);
-    return (array.length < minLength)
-        ? copyOf(array, minLength + padding)
-        : array;
-  }
-
-  // Arrays.copyOf() requires Java 6
-  private static int[] copyOf(int[] original, int length) {
-    int[] copy = new int[length];
-    System.arraycopy(original, 0, copy, 0, Math.min(original.length, length));
-    return copy;
+    return (array.length < minLength) ? Arrays.copyOf(array, minLength + padding) : array;
   }
 
   /**

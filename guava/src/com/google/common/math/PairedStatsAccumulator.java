@@ -22,6 +22,7 @@ import static java.lang.Double.NaN;
 import static java.lang.Double.isNaN;
 
 import com.google.common.annotations.Beta;
+import com.google.common.annotations.GwtIncompatible;
 
 /**
  * A mutable object which accumulates paired double values (e.g. points on a plane) and tracks
@@ -31,6 +32,7 @@ import com.google.common.annotations.Beta;
  * @since 20.0
  */
 @Beta
+@GwtIncompatible
 public final class PairedStatsAccumulator {
 
   // These fields must satisfy the requirements of PairedStats' constructor as well as those of the
@@ -69,27 +71,24 @@ public final class PairedStatsAccumulator {
    * Adds the given statistics to the dataset, as if the individual values used to compute the
    * statistics had been added directly.
    */
-  // TODO(b/26080783): Make public once ready (including exhaustive tests for edge cases).
-  void addAll(PairedStats values) {
+  public void addAll(PairedStats values) {
     if (values.count() == 0) {
       return;
     }
 
-    if (count() == 0) {
+    xStats.addAll(values.xStats());
+    if (yStats.count() == 0) {
       sumOfProductsOfDeltas = values.sumOfProductsOfDeltas();
     } else {
-      long nextCount = count() + values.count();
-      double xMeanDelta = xStats.mean() - values.xStats().mean();
-      double yMeanDelta = yStats.mean() - values.yStats().mean();
-      // Note that non-finite inputs will have sumOfSquaresOfDeltas = NaN, so non-finite values will
-      // result in NaN naturally.
-      // TODO(b/26080783): Consider optimizations similar to those in StatsAccumulator.addAll().
+      // This is a generalized version of the calculation in add(double, double) above. Note that
+      // non-finite inputs will have sumOfProductsOfDeltas = NaN, so non-finite values will result
+      // in NaN naturally.
       sumOfProductsOfDeltas +=
           values.sumOfProductsOfDeltas()
-              + xMeanDelta * yMeanDelta * count() * values.count() / nextCount;
+              + (values.xStats().mean() - xStats.mean())
+              * (values.yStats().mean() - yStats.mean())
+              * values.count();
     }
-
-    xStats.addAll(values.xStats());
     yStats.addAll(values.yStats());
   }
 

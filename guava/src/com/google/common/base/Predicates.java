@@ -29,7 +29,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import javax.annotation.CheckReturnValue;
 import javax.annotation.Nullable;
 
 /**
@@ -45,7 +44,6 @@ import javax.annotation.Nullable;
  * @author Kevin Bourrillion
  * @since 2.0
  */
-@CheckReturnValue
 @GwtCompatible(emulated = true)
 public final class Predicates {
   private Predicates() {}
@@ -190,7 +188,7 @@ public final class Predicates {
    * instanceOf(ArrayList.class)} will yield different results for the two equal
    * instances {@code Lists.newArrayList(1)} and {@code Arrays.asList(1)}.
    */
-  @GwtIncompatible("Class.isInstance")
+  @GwtIncompatible // Class.isInstance
   public static Predicate<Object> instanceOf(Class<?> clazz) {
     return new InstanceOfPredicate(clazz);
   }
@@ -202,7 +200,7 @@ public final class Predicates {
    *
    * @since 10.0
    */
-  @GwtIncompatible("Class.isAssignableFrom")
+  @GwtIncompatible // Class.isAssignableFrom
   @Beta
   public static Predicate<Class<?>> assignableFrom(Class<?> clazz) {
     return new AssignableFromPredicate(clazz);
@@ -479,7 +477,7 @@ public final class Predicates {
   }
 
   /** @see Predicates#instanceOf(Class) */
-  @GwtIncompatible("Class.isInstance")
+  @GwtIncompatible // Class.isInstance
   private static class InstanceOfPredicate implements Predicate<Object>, Serializable {
     private final Class<?> clazz;
 
@@ -515,7 +513,7 @@ public final class Predicates {
   }
 
   /** @see Predicates#assignableFrom(Class) */
-  @GwtIncompatible("Class.isAssignableFrom")
+  @GwtIncompatible // Class.isAssignableFrom
   private static class AssignableFromPredicate implements Predicate<Class<?>>, Serializable {
     private final Class<?> clazz;
 
@@ -630,7 +628,7 @@ public final class Predicates {
   }
 
   /** @see Predicates#contains(Pattern) */
-  @GwtIncompatible("Only used by other GWT-incompatible code.")
+  @GwtIncompatible // Only used by other GWT-incompatible code.
   private static class ContainsPatternPredicate implements Predicate<CharSequence>, Serializable {
     final Pattern pattern;
 
@@ -677,7 +675,7 @@ public final class Predicates {
   }
 
   /** @see Predicates#containsPattern(String) */
-  @GwtIncompatible("Only used by other GWT-incompatible code.")
+  @GwtIncompatible // Only used by other GWT-incompatible code.
   private static class ContainsPatternFromStringPredicate extends ContainsPatternPredicate {
 
     ContainsPatternFromStringPredicate(String string) {

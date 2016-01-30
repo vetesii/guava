@@ -21,7 +21,9 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableList;
 
 import com.google.common.annotations.Beta;
+import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -32,7 +34,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import javax.annotation.CheckReturnValue;
 import javax.annotation.Nullable;
 
 /**
@@ -45,6 +46,7 @@ import javax.annotation.Nullable;
  * @author Ben Yu
  * @since 1.0
  */
+@GwtIncompatible
 public final class Throwables {
   private Throwables() {}
 
@@ -155,6 +157,7 @@ public final class Throwables {
    * @return nothing will ever be returned; this return type is only for your convenience, as
    *     illustrated in the example above
    */
+  @CanIgnoreReturnValue
   public static RuntimeException propagate(Throwable throwable) {
     propagateIfPossible(checkNotNull(throwable));
     throw new RuntimeException(throwable);
@@ -168,7 +171,6 @@ public final class Throwables {
    *   assertEquals("Unable to assign a customer id", Throwables.getRootCause(e).getMessage());
    * </pre>
    */
-  @CheckReturnValue
   public static Throwable getRootCause(Throwable throwable) {
     Throwable cause;
     while ((cause = throwable.getCause()) != null) {
@@ -193,7 +195,6 @@ public final class Throwables {
    * @return an unmodifiable list containing the cause chain starting with {@code throwable}
    */
   @Beta // TODO(kevinb): decide best return type
-  @CheckReturnValue
   public static List<Throwable> getCausalChain(Throwable throwable) {
     checkNotNull(throwable);
     List<Throwable> causes = new ArrayList<Throwable>(4);
@@ -210,7 +211,6 @@ public final class Throwables {
    * parsing the resulting string; if you need programmatic access to the stack frames, you can call
    * {@link Throwable#getStackTrace()}.
    */
-  @CheckReturnValue
   public static String getStackTraceAsString(Throwable throwable) {
     StringWriter stringWriter = new StringWriter();
     throwable.printStackTrace(new PrintWriter(stringWriter));
@@ -245,7 +245,6 @@ public final class Throwables {
    */
   // TODO(cpovirk): Say something about the possibility that List access could fail at runtime?
   @Beta
-  @CheckReturnValue
   public static List<StackTraceElement> lazyStackTrace(Throwable throwable) {
     return lazyStackTraceIsLazy()
         ? jlaStackTrace(throwable)
@@ -259,7 +258,6 @@ public final class Throwables {
    * @since 19.0
    */
   @Beta
-  @CheckReturnValue
   public static boolean lazyStackTraceIsLazy() {
     return getStackTraceElementMethod != null & getStackTraceDepthMethod != null;
   }
